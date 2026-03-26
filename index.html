@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Orbis Ultimate — Radio & TV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#121212;--surface:#181818;--surface2:#282828;--surface3:#3e3e3e;
+  --accent:#1DB954;--accent2:#1ed760;--text:#fff;--muted:#a7a7a7;--hover:#2a2a2a;
+  --bar-h:90px;--side-w:240px;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+#splash{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .7s,visibility .7s}
+#splash.hide{opacity:0;visibility:hidden;pointer-events:none}
+.sp-logo{font-size:56px;animation:pop .6s ease}
+.sp-title{margin-top:14px;font-size:28px;font-weight:800;color:var(--accent)}
+.sp-sub{margin-top:6px;color:var(--muted);font-size:13px}
+.sp-bar{margin-top:28px;width:200px;height:3px;background:#333;border-radius:4px;overflow:hidden}
+.sp-fill{height:100%;background:var(--accent);border-radius:4px;animation:sfill 2.2s ease forwards}
+@keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes sfill{from{width:0}to{width:100%}}
+.layout{display:flex;flex:1;overflow:hidden;padding:8px;gap:8px}
+.sidebar{width:var(--side-w);display:flex;flex-direction:column;gap:8px;flex-shrink:0;overflow:hidden}
+.sidebar-top{background:var(--surface);border-radius:10px;padding:20px 16px}
+.logo{display:flex;align-items:center;gap:8px;margin-bottom:24px}
+.logo-icon{font-size:26px}.logo-text{font-size:18px;font-weight:800}
+.nav-link{display:flex;align-items:center;gap:14px;padding:8px 4px;cursor:pointer;transition:color .2s;color:var(--muted);font-size:14px;font-weight:600;border:none;background:none;width:100%;text-align:left;border-radius:4px}
+.nav-link:hover,.nav-link.active{color:var(--text)}
+.nav-link.active .nav-icon{color:var(--accent)}
+.nav-icon{font-size:20px;flex-shrink:0}
+.sidebar-lib{background:var(--surface);border-radius:10px;padding:16px;flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--surface3) transparent}
+.lib-header{color:var(--muted);font-size:12px;font-weight:700;margin-bottom:14px;padding:0 4px;letter-spacing:.08em;text-transform:uppercase}
+.lib-item{display:flex;align-items:center;gap:10px;padding:8px 4px;border-radius:6px;cursor:pointer;transition:background .15s}
+.lib-item:hover{background:var(--hover)}
+.lib-thumb{width:42px;height:42px;border-radius:6px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.lib-name{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lib-meta{font-size:11px;color:var(--muted)}
+.lib-eq{display:flex;gap:2px;height:14px;align-items:flex-end;margin-left:auto;flex-shrink:0}
+.lib-eq span{width:3px;background:var(--accent);border-radius:2px;animation:eq .7s infinite alternate}
+.lib-eq span:nth-child(2){animation-delay:.15s}.lib-eq span:nth-child(3){animation-delay:.3s}
+@keyframes eq{from{height:4px;margin-top:10px}to{height:14px;margin-top:0}}
+.main{flex:1;background:var(--surface);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}
+.main-header{padding:16px 24px 0;background:linear-gradient(180deg,#1a3a2a 0%,var(--surface) 100%)}
+.main-header-top{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.search-bar{flex:1;max-width:360px;position:relative}
+.search-bar input{width:100%;background:#fff;color:#000;border:none;border-radius:24px;padding:8px 36px 8px 38px;font-size:14px;outline:none;font-family:'Inter',sans-serif}
+.search-bar .si{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none}
+.search-bar .sc{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:13px;cursor:pointer;color:#666;background:none;border:none;display:none;font-family:'Inter',sans-serif}
+#searchInput:not(:placeholder-shown)~.sc{display:block}
+.genre-pills{display:flex;gap:8px;overflow-x:auto;padding:0 0 16px;scrollbar-width:none}
+.gpill{background:var(--surface2);color:var(--text);border:none;border-radius:20px;padding:6px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .2s;font-family:'Inter',sans-serif}
+.gpill:hover{background:var(--surface3)}
+.gpill.active{background:var(--text);color:#000}
+.section{flex:1;overflow-y:auto;padding:0 24px 120px;scrollbar-width:thin;scrollbar-color:var(--surface3) transparent}
+.section-title{font-size:22px;font-weight:800;margin:20px 0 16px;display:flex;align-items:center;justify-content:space-between}
+.sec-meta{font-size:12px;color:var(--muted);font-weight:400}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+@media(max-width:600px){.grid{grid-template-columns:repeat(2,1fr)}}
+.card{background:var(--surface2);border-radius:8px;padding:16px;cursor:pointer;transition:background .2s;position:relative}
+.card:hover{background:var(--hover)}
+.card-art{width:100%;aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:42px;margin-bottom:14px;position:relative;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.card-art img{width:100%;height:100%;object-fit:cover;border-radius:6px}
+.card-play{position:absolute;bottom:8px;right:8px;width:44px;height:44px;background:var(--accent);border:none;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;opacity:0;transform:translateY(6px);transition:all .25s;box-shadow:0 8px 16px rgba(0,0,0,.4)}
+.card:hover .card-play,.card.playing .card-play{opacity:1;transform:translateY(0)}
+.card-fav{position:absolute;top:8px;right:8px;background:none;border:none;font-size:16px;cursor:pointer;opacity:0;transition:opacity .2s;z-index:2}
+.card:hover .card-fav,.card-fav.loved{opacity:1}
+.card-badge{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.6);color:var(--muted);border-radius:3px;padding:2px 6px;font-size:9px;font-weight:800;z-index:2}
+.card-name{font-size:14px;font-weight:700;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card-desc{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.now-eq{position:absolute;bottom:8px;left:8px;display:flex;gap:2px;height:14px;align-items:flex-end}
+.now-eq span{width:3px;background:var(--accent);border-radius:2px;animation:eq .7s infinite alternate}
+.now-eq span:nth-child(2){animation-delay:.15s}.now-eq span:nth-child(3){animation-delay:.3s}
+.empty{text-align:center;padding:80px 20px;color:var(--muted);grid-column:1/-1}
+.empty-icon{font-size:52px;margin-bottom:14px}
+.player{height:var(--bar-h);background:#0a0a0a;border-top:1px solid #282828;display:flex;align-items:center;padding:0 16px;gap:8px;flex-shrink:0}
+.pl-left{width:240px;display:flex;align-items:center;gap:12px;min-width:0;flex-shrink:0}
+.pl-thumb{width:56px;height:56px;border-radius:4px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden;flex-shrink:0}
+.pl-thumb img{width:100%;height:100%;object-fit:cover;border-radius:4px}
+.pl-info{min-width:0;flex:1}
+.pl-name{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.pl-heart{background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted);flex-shrink:0;transition:color .2s}
+.pl-heart.loved{color:var(--accent)}
+.pl-center{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;max-width:480px}
+.pl-controls{display:flex;align-items:center;gap:20px}
+.ctrl-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;transition:color .2s;padding:4px}
+.ctrl-btn:hover{color:var(--text)}
+.ctrl-play{width:40px;height:40px;background:var(--text);border:none;color:#000;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:transform .1s}
+.ctrl-play:hover{transform:scale(1.06);background:var(--accent2)}
+.pl-progress{width:100%;display:flex;align-items:center;gap:8px}
+.prog-tag{font-size:11px;color:var(--muted);white-space:nowrap;font-weight:600}
+.prog-bar{flex:1;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:var(--muted);border-radius:2px;width:100%}
+.prog-bar:hover .prog-fill{background:var(--accent)}
+.pl-right{width:240px;display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-shrink:0}
+.vol-wrap{display:flex;align-items:center;gap:6px}
+.vol-wrap input[type=range]{width:80px;accent-color:var(--accent);cursor:pointer;-webkit-appearance:none;height:4px;background:var(--surface3);border-radius:2px;outline:none}
+.vol-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:var(--text);border-radius:50%;cursor:pointer}
+.sleep-pill{font-size:11px;color:var(--accent);font-weight:600;cursor:pointer;background:rgba(29,185,84,.1);border:1px solid rgba(29,185,84,.3);border-radius:12px;padding:3px 10px;display:none}
+.sleep-pill.show{display:block}
+#sleepModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center}
+#sleepModal.show{display:flex}
+.modal-box{background:#282828;border-radius:12px;padding:28px;width:320px;max-width:92vw}
+.modal-title{font-size:22px;font-weight:800;margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:20px}
+.sleep-opts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.sleep-opt{background:var(--surface3);color:var(--text);border:none;border-radius:6px;padding:12px;cursor:pointer;font-size:13px;font-weight:600;transition:background .2s;font-family:'Inter',sans-serif}
+.sleep-opt:hover{background:#4e4e4e}
+.modal-cancel{width:100%;background:transparent;border:1px solid var(--surface3);color:var(--muted);border-radius:6px;padding:10px;cursor:pointer;font-size:13px;font-family:'Inter',sans-serif;transition:all .2s}
+.modal-cancel:hover{border-color:var(--text);color:var(--text)}
+#videoOverlay{display:none;position:fixed;inset:0;background:#000;z-index:400;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+#videoOverlay.open{display:flex}
+#tvVideo{width:100%;max-width:960px;max-height:78vh;border-radius:8px}
+.video-bar{display:flex;gap:10px}
+.vbtn{background:rgba(255,255,255,.1);border:none;color:#fff;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:13px;font-weight:600;transition:background .2s;font-family:'Inter',sans-serif}
+.vbtn:hover{background:rgba(255,255,255,.2)}
+.vid-title{color:#fff;font-size:15px;font-weight:700}
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);padding:10px 22px;border-radius:24px;font-size:13px;font-weight:600;z-index:9999;pointer-events:none;white-space:nowrap;box-shadow:0 4px 24px rgba(0,0,0,.5);animation:tfade .3s ease}
+@keyframes tfade{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translateX(-50%)}}
+@media(max-width:700px){.sidebar{display:none}.pl-left{width:auto;flex:1}.pl-right{width:auto}.pl-center{flex:2}.vol-wrap{display:none}}
+audio{display:none}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:3px}
+</style>
+</head>
+<body>
+<div id="splash">
+  <div class="sp-logo">🌍</div>
+  <div class="sp-title">Orbis Ultimate</div>
+  <div class="sp-sub">Radio & TV — Dünya Yayınları</div>
+  <div class="sp-bar"><div class="sp-fill"></div></div>
+</div>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <div class="logo"><span class="logo-icon">🌍</span><span class="logo-text">Orbis</span></div>
+      <button class="nav-link active" onclick="setTab('radio',this)"><span class="nav-icon">📻</span>Radyo</button>
+      <button class="nav-link" onclick="setTab('tv',this)"><span class="nav-icon">📺</span>TV Kanalları</button>
+      <button class="nav-link" onclick="setTab('favorites',this)"><span class="nav-icon">❤️</span>Favorilerim</button>
+    </div>
+    <div class="sidebar-lib">
+      <div class="lib-header">Ülkeler</div>
+      <div id="countryList"></div>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="main-header">
+      <div class="main-header-top">
+        <div class="search-bar">
+          <span class="si">🔍</span>
+          <input type="text" id="searchInput" placeholder="Kanal ara..." oninput="doSearch()">
+          <button class="sc" onclick="clearSearch()">✕</button>
+        </div>
+      </div>
+      <div class="genre-pills">
+        <button class="gpill active" onclick="setGenre('Tümü',this)">Tümü</button>
+        <button class="gpill" onclick="setGenre('Haber',this)">📰 Haber</button>
+        <button class="gpill" onclick="setGenre('Pop',this)">🎵 Pop</button>
+        <button class="gpill" onclick="setGenre('Rock',this)">🎸 Rock</button>
+        <button class="gpill" onclick="setGenre('Arabesk',this)">🎤 Arabesk</button>
+        <button class="gpill" onclick="setGenre('Caz',this)">🎷 Caz</button>
+        <button class="gpill" onclick="setGenre('Klasik',this)">🎻 Klasik</button>
+        <button class="gpill" onclick="setGenre('Spor',this)">⚽ Spor</button>
+        <button class="gpill" onclick="setGenre('Belgesel',this)">🎬 Belgesel</button>
+        <button class="gpill" onclick="setGenre('Nostalji',this)">📻 Nostalji</button>
+        <button class="gpill" onclick="setGenre('Dini',this)">🕌 Dini</button>
+        <button class="gpill" onclick="setGenre('Elektronik',this)">🎧 Elektronik</button>
+        <button class="gpill" onclick="setGenre('Çocuk',this)">🧒 Çocuk</button>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title"><span id="sectionTitle">Türkiye Radyoları</span><span class="sec-meta" id="sectionMeta"></span></div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </main>
+</div>
+<div class="player">
+  <div class="pl-left">
+    <div class="pl-thumb" id="plThumb">🎵</div>
+    <div class="pl-info"><div class="pl-name" id="plName">Bir kanal seç</div><div class="pl-meta" id="plMeta">Orbis Ultimate</div></div>
+    <button class="pl-heart" id="plHeart" onclick="toggleCurrentFav()">🤍</button>
+  </div>
+  <div class="pl-center">
+    <div class="pl-controls">
+      <button class="ctrl-btn" onclick="openSleepModal()" title="Uyku">😴</button>
+      <button class="ctrl-btn" onclick="togglePiP()" title="PiP">⧉</button>
+      <button class="ctrl-play" id="ctrlPlay" onclick="togglePlay()">▶</button>
+      <button class="ctrl-btn" onclick="stopAll()" title="Durdur">⏹</button>
+    </div>
+    <div class="pl-progress">
+      <span class="prog-tag">● CANLI</span>
+      <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+      <span class="sleep-pill" id="sleepPill">😴 --:--</span>
+    </div>
+  </div>
+  <div class="pl-right">
+    <div class="vol-wrap">
+      <span style="color:var(--muted);font-size:15px">🔈</span>
+      <input type="range" id="volSlider" min="0" max="1" step="0.02" value="1" oninput="setVol(this.value)">
+      <span style="color:var(--muted);font-size:15px">🔊</span>
+    </div>
+  </div>
+</div>
+<div id="sleepModal">
+  <div class="modal-box">
+    <div class="modal-title">Uyku Zamanlayıcısı</div>
+    <div class="modal-sub">Kaç dakika sonra yayın kapansın?</div>
+    <div class="sleep-opts">
+      <button class="sleep-opt" onclick="setSleep(15)">15 dk</button>
+      <button class="sleep-opt" onclick="setSleep(30)">30 dk</button>
+      <button class="sleep-opt" onclick="setSleep(45)">45 dk</button>
+      <button class="sleep-opt" onclick="setSleep(60)">60 dk</button>
+      <button class="sleep-opt" onclick="setSleep(90)">90 dk</button>
+      <button class="sleep-opt" onclick="cancelSleep()" style="background:#4e1e1e;color:#ff6b6b">İptal</button>
+    </div>
+    <button class="modal-cancel" onclick="closeSleepModal()">Kapat</button>
+  </div>
+</div>
+<div id="videoOverlay">
+  <div class="vid-title" id="videoTitle">Canlı TV</div>
+  <video id="tvVideo" controls autoplay playsinline></video>
+  <div class="video-bar">
+    <button class="vbtn" onclick="togglePiP()">⧉ Ekran İçinde Ekran</button>
+    <button class="vbtn" onclick="closeVideo()">✕ Kapat</button>
+  </div>
+</div>
+<audio id="audioPlayer"></audio>
+<script>
+const COUNTRIES=[
+  {code:'TR',name:'Türkiye',flag:'🇹🇷'},{code:'US',name:'ABD',flag:'🇺🇸'},
+  {code:'GB',name:'İngiltere',flag:'🇬🇧'},{code:'DE',name:'Almanya',flag:'🇩🇪'},
+  {code:'FR',name:'Fransa',flag:'🇫🇷'},{code:'IT',name:'İtalya',flag:'🇮🇹'},
+  {code:'ES',name:'İspanya',flag:'🇪🇸'},{code:'RU',name:'Rusya',flag:'🇷🇺'},
+  {code:'JP',name:'Japonya',flag:'🇯🇵'},{code:'AZ',name:'Azerbaycan',flag:'🇦🇿'},
+];
+const RADIOS=[
+  {id:'r1',name:'TRT FM',country:'TR',genre:'Pop',type:'radio',url:'https://trtradyo.akamaized.net/hls/live/2086110/trtfm/playlist.m3u8',logo:'https://upload.wikimedia.org/wikipedia/tr/thumb/0/0d/TRT_FM_logo.svg/120px-TRT_FM_logo.svg.png',bg:'#c2185b'},
+  {id:'r2',name:'TRT Haber Radyo',country:'TR',genre:'Haber',type:'radio',url:'https://trtradyo.akamaized.net/hls/live/2086111/trthaberyasam/playlist.m3u8',logo:'',bg:'#1565c0'},
+  {id:'r3',name:'Power FM',country:'TR',genre:'Pop',type:'radio',url:'https://listen.powerapp.com.tr/powerfm/mpeg/icecast.audio',logo:'',bg:'#bf360c'},
+  {id:'r4',name:'Power Türk',country:'TR',genre:'Pop',type:'radio',url:'https://listen.powerapp.com.tr/powerturk/mpeg/icecast.audio',logo:'',bg:'#6a1b9a'},
+  {id:'r5',name:'Kral FM',country:'TR',genre:'Arabesk',type:'radio',url:'https://streaming.radyokral.com/kraltürk/mp3-128',logo:'',bg:'#e65100'},
+  {id:'r6',name:'Radyo 7',country:'TR',genre:'Dini',type:'radio',url:'https://radyo7.radyotvonline.net/radyo7',logo:'',bg:'#2e7d32'},
+  {id:'r7',name:'Virgin Radio TR',country:'TR',genre:'Rock',type:'radio',url:'https://listen.powerapp.com.tr/virginradio/mpeg/icecast.audio',logo:'',bg:'#b71c1c'},
+  {id:'r8',name:'TRT Müzik',country:'TR',genre:'Klasik',type:'radio',url:'https://trtradyo.akamaized.net/hls/live/2086112/trtmuzik/playlist.m3u8',logo:'',bg:'#37474f'},
+  {id:'r9',name:'Slow Türk',country:'TR',genre:'Pop',type:'radio',url:'https://listen.powerapp.com.tr/slowturk/mpeg/icecast.audio',logo:'',bg:'#00838f'},
+  {id:'r10',name:'Nostalji FM',country:'TR',genre:'Nostalji',type:'radio',url:'https://listen.powerapp.com.tr/nostalji/mpeg/icecast.audio',logo:'',bg:'#4e342e'},
+  {id:'r11',name:'BBC Radio 1',country:'GB',genre:'Pop',type:'radio',url:'https://a.files.bbci.co.uk/media/live/manifesto/audio/simulcast/hls/nonuk/enhanced/ak/bbc_radio_one.m3u8',logo:'',bg:'#c2185b'},
+  {id:'r12',name:'BBC Radio 4',country:'GB',genre:'Haber',type:'radio',url:'https://a.files.bbci.co.uk/media/live/manifesto/audio/simulcast/hls/nonuk/enhanced/ak/bbc_radio_fourfm.m3u8',logo:'',bg:'#1565c0'},
+  {id:'r13',name:'NPR News',country:'US',genre:'Haber',type:'radio',url:'https://npr-ice.streamguys1.com/live.mp3',logo:'',bg:'#212121'},
+  {id:'r14',name:'Jazz FM',country:'GB',genre:'Caz',type:'radio',url:'https://stream.jazz.fm/jazz',logo:'',bg:'#f57f17'},
+  {id:'r15',name:'Klassik Radio',country:'DE',genre:'Klasik',type:'radio',url:'https://stream.klassikradio.de/live/mp3-256/stream.klassikradio.de/',logo:'',bg:'#4a148c'},
+];
+const TVS=[
+  {id:'t1',name:'TRT 1',country:'TR',genre:'Belgesel',type:'tv',url:'https://tv-trt1.medya.trt.com.tr/master.m3u8',logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/TRT_1_logo_%282017%29.svg/120px-TRT_1_logo_%282017%29.svg.png',bg:'#1b5e20'},
+  {id:'t2',name:'TRT Haber',country:'TR',genre:'Haber',type:'tv',url:'https://tv-trthaber.medya.trt.com.tr/master.m3u8',logo:'',bg:'#0d47a1'},
+  {id:'t3',name:'TRT Spor',country:'TR',genre:'Spor',type:'tv',url:'https://tv-trtspor1.medya.trt.com.tr/master.m3u8',logo:'',bg:'#1b5e20'},
+  {id:'t4',name:'TRT Çocuk',country:'TR',genre:'Çocuk',type:'tv',url:'https://tv-trtcocuk.medya.trt.com.tr/master.m3u8',logo:'',bg:'#e65100'},
+  {id:'t5',name:'TRT Belgesel',country:'TR',genre:'Belgesel',type:'tv',url:'https://tv-trtbelgesel.medya.trt.com.tr/master.m3u8',logo:'',bg:'#37474f'},
+  {id:'t6',name:'Kanal 7',country:'TR',genre:'Haber',type:'tv',url:'https://kanalssl.radyotvonline.net/kanal7',logo:'',bg:'#880e4f'},
+];
+let tab='radio',country='TR',genre='Tümü',q='',current=null,playing=false;
+let sleepTO=null,sleepEnd=null;
+const audio=document.getElementById('audioPlayer');
+const vid=document.getElementById('tvVideo');
+function getList(){
+  let l=tab==='radio'?[...RADIOS]:tab==='tv'?[...TVS]:getFavIds().map(id=>[...RADIOS,...TVS].find(c=>c.id===id)).filter(Boolean);
+  if(tab!=='favorites'&&country!=='ALL')l=l.filter(c=>c.country===country);
+  if(genre!=='Tümü')l=l.filter(c=>c.genre===genre);
+  if(q)l=l.filter(c=>c.name.toLowerCase().includes(q.toLowerCase()));
+  return l;
+}
+function renderGrid(){
+  const g=document.getElementById('grid'),list=getList(),favs=getFavIds();
+  const cObj=COUNTRIES.find(c=>c.code===country)||{flag:'🌐',name:'Tüm Dünya'};
+  document.getElementById('sectionTitle').textContent=tab==='favorites'?'Favorilerim':`${cObj.flag} ${cObj.name} ${tab==='radio'?'Radyoları':'TV Kanalları'}`;
+  document.getElementById('sectionMeta').textContent=list.length+' kanal';
+  if(!list.length){g.innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><div style="font-size:14px">Kanal bulunamadı</div></div>`;return;}
+  g.innerHTML=list.map(ch=>{
+    const isFav=favs.includes(ch.id),isNow=current&&current.id===ch.id;
+    const art=ch.logo?`<img src="${ch.logo}" onerror="this.style.display='none'" loading="lazy">`:`<span style="font-size:42px">${ch.type==='tv'?'📺':'📻'}</span>`;
+    return`<div class="card${isNow?' playing':''}" onclick="playChannel('${ch.id}')">
+      <div class="card-badge">${ch.type.toUpperCase()}</div>
+      <div class="card-art" style="background:${ch.bg||'#333'}">${art}
+        ${isNow?`<div class="now-eq"><span></span><span></span><span></span></div>`:''}
+        <button class="card-play" onclick="event.stopPropagation();playChannel('${ch.id}')">▶</button>
+      </div>
+      <button class="card-fav${isFav?' loved':''}" onclick="event.stopPropagation();toggleFav('${ch.id}')">${isFav?'❤️':'🤍'}</button>
+      <div class="card-name">${ch.name}</div>
+      <div class="card-desc">${ch.country} · ${ch.genre}</div>
+    </div>`;
+  }).join('');
+}
+function renderSidebar(){
+  document.getElementById('countryList').innerHTML=COUNTRIES.map(c=>`
+    <div class="lib-item" onclick="setCountry('${c.code}')">
+      <div class="lib-thumb">${c.flag}</div>
+      <div style="min-width:0"><div class="lib-name">${c.name}</div><div class="lib-meta">${tab==='tv'?'TV':'Radyo'}</div></div>
+      ${country===c.code?`<div class="lib-eq"><span></span><span></span><span></span></div>`:''}
+    </div>`).join('');
+}
+function findCh(id){return[...RADIOS,...TVS].find(c=>c.id===id);}
+async function playChannel(id){
+  const ch=findCh(id);if(!ch)return;current=ch;
+  if(ch.type==='tv'){
+    vid.pause();vid.src='';document.getElementById('videoOverlay').classList.add('open');
+    document.getElementById('videoTitle').textContent=ch.name;
+    vid.src=ch.url;vid.play().catch(()=>autoHeal(ch,vid));
+    setTimeout(()=>{if(vid.error||vid.networkState===3)autoHeal(ch,vid);},6000);
+  } else {
+    document.getElementById('videoOverlay').classList.remove('open');vid.pause();vid.src='';
+    const cached=getCache(ch.name);if(cached)ch.url=cached;
+    audio.src=ch.url;
+    try{await audio.play();playing=true;}catch(e){await autoHeal(ch,audio);}
+    setTimeout(async()=>{if(audio.error||audio.networkState===3)await autoHeal(ch,audio);},6000);
+    if('mediaSession' in navigator)navigator.mediaSession.metadata=new MediaMetadata({title:ch.name,artist:ch.country,artwork:ch.logo?[{src:ch.logo,sizes:'96x96',type:'image/png'}]:[]});
+  }
+  updatePlayer(ch);renderGrid();renderSidebar();
+}
+function updatePlayer(ch){
+  document.getElementById('plName').textContent=ch.name;
+  document.getElementById('plMeta').textContent=`${ch.country} · ${ch.genre}`;
+  document.getElementById('ctrlPlay').textContent='⏸';
+  const t=document.getElementById('plThumb');
+  t.innerHTML=ch.logo?`<img src="${ch.logo}" onerror="this.parentNode.textContent='${ch.type==='tv'?'📺':'📻'}'">`:(ch.type==='tv'?'📺':'📻');
+  const fav=getFavIds().includes(ch.id);
+  const h=document.getElementById('plHeart');h.textContent=fav?'❤️':'🤍';h.classList.toggle('loved',fav);
+}
+function togglePlay(){
+  if(!current||current.type==='tv')return;
+  if(audio.paused){audio.play();playing=true;document.getElementById('ctrlPlay').textContent='⏸';}
+  else{audio.pause();playing=false;document.getElementById('ctrlPlay').textContent='▶';}
+}
+function stopAll(){
+  audio.pause();audio.src='';vid.pause();vid.src='';
+  document.getElementById('videoOverlay').classList.remove('open');
+  current=null;playing=false;document.getElementById('ctrlPlay').textContent='▶';
+  document.getElementById('plName').textContent='Bir kanal seç';
+  document.getElementById('plMeta').textContent='Orbis Ultimate';
+  document.getElementById('plThumb').innerHTML='🎵';
+  document.getElementById('plHeart').textContent='🤍';renderGrid();
+}
+function closeVideo(){vid.pause();vid.src='';document.getElementById('videoOverlay').classList.remove('open');current=null;renderGrid();}
+function setVol(v){audio.volume=v;vid.volume=v;}
+async function togglePiP(){
+  if(!current||current.type!=='tv'){showToast('PiP yalnızca TV için geçerli','info');return;}
+  try{if(document.pictureInPictureElement)await document.exitPictureInPicture();else await vid.requestPictureInPicture();}
+  catch(e){showToast('PiP desteklenmiyor','error');}
+}
+audio.addEventListener('playing',()=>{playing=true;document.getElementById('ctrlPlay').textContent='⏸';});
+audio.addEventListener('pause',()=>{playing=false;document.getElementById('ctrlPlay').textContent='▶';});
+audio.addEventListener('error',()=>{if(current&&current.type==='radio')autoHeal(current,audio);});
+const RB='https://de1.api.radio-browser.info/json';
+const IPTV_BASE='https://iptv-org.github.io/iptv';
+async function alive(url,ms=4000){
+  const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);
+  try{await fetch(url,{method:'HEAD',signal:c.signal,mode:'no-cors'});clearTimeout(t);return true;}
+  catch{clearTimeout(t);return false;}
+}
+async function newRadioURL(name,cc){
+  try{const r=await fetch(`${RB}/stations/search?name=${encodeURIComponent(name)}&countrycode=${cc}&limit=5&hidebroken=true&order=votes&reverse=true`);const list=await r.json();for(const s of list){if(await alive(s.url_resolved))return s.url_resolved;}}catch(e){}return null;
+}
+function parseM3U(text){const lines=text.split('\n');const chs=[];let cur={};for(const l of lines){const s=l.trim();if(s.startsWith('#EXTINF')){cur={};const m=s.match(/,(.+)$/);if(m)cur.name=m[1].trim();}else if(s.startsWith('http')&&cur.name){cur.url=s;chs.push({...cur});cur={};}}return chs;}
+async function getIPTV(cc='TR'){
+  const k=`iptv_${cc}`;const ca=localStorage.getItem(k);
+  if(ca){const{data,t}=JSON.parse(ca);if(Date.now()-t<21600000)return data;}
+  try{const res=await fetch(`${IPTV_BASE}/countries/${cc.toLowerCase()}.m3u`);const data=parseM3U(await res.text());localStorage.setItem(k,JSON.stringify({data,t:Date.now()}));return data;}catch(e){return[];}
+}
+function nameSim(a,b){a=a.toLowerCase().replace(/[^a-z0-9]/g,'');b=b.toLowerCase().replace(/[^a-z0-9]/g,'');if(a===b)return 1;if(a.includes(b)||b.includes(a))return.8;const s=a.length<b.length?a:b;let m=0;for(const c of s)if(b.includes(c))m++;return m/s.length;}
+async function newTVURL(name,cc){const list=await getIPTV(cc);let best=null,sc=0;for(const ch of list){const s=nameSim(name,ch.name);if(s>sc){sc=s;best=ch;}}if(best&&sc>=.6&&await alive(best.url))return best.url;return null;}
+async function autoHeal(ch,el){
+  showToast(`📡 ${ch.name} yenileniyor...`,'warn');
+  const nu=ch.type==='tv'?await newTVURL(ch.name,ch.country):await newRadioURL(ch.name,ch.country);
+  if(nu){ch.url=nu;setCache(ch.name,nu);el.src=nu;el.play().catch(()=>{});const arr=ch.type==='tv'?TVS:RADIOS;const f=arr.find(c=>c.id===ch.id);if(f)f.url=nu;showToast(`✅ ${ch.name} güncellendi!`,'success');}
+  else showToast(`❌ ${ch.name} için yayın bulunamadı`,'error');
+}
+function setCache(n,u){const c=JSON.parse(localStorage.getItem('urlCache')||'{}');c[n]={u,t:Date.now()};localStorage.setItem('urlCache',JSON.stringify(c));}
+function getCache(n){const c=JSON.parse(localStorage.getItem('urlCache')||'{}');const e=c[n];if(e&&Date.now()-e.t<86400000)return e.u;return null;}
+async function bgCheck(){
+  const favs=getFavIds();if(!favs.length)return;
+  const all=[...RADIOS,...TVS];
+  for(const id of favs){const ch=all.find(c=>c.id===id);if(!ch)continue;const ca=getCache(ch.name);if(ca){ch.url=ca;continue;}const ok=await alive(ch.url,3000);if(!ok){const nu=ch.type==='tv'?await newTVURL(ch.name,ch.country):await newRadioURL(ch.name,ch.country);if(nu){ch.url=nu;setCache(ch.name,nu);}}await new Promise(r=>setTimeout(r,800));}
+}
+function getFavIds(){return JSON.parse(localStorage.getItem('favorites')||'[]');}
+function toggleFav(id){
+  let f=getFavIds();f=f.includes(id)?f.filter(x=>x!==id):[...f,id];
+  localStorage.setItem('favorites',JSON.stringify(f));
+  if(current&&current.id===id){const h=document.getElementById('plHeart');h.textContent=f.includes(id)?'❤️':'🤍';h.classList.toggle('loved',f.includes(id));}
+  renderGrid();
+}
+function toggleCurrentFav(){if(current)toggleFav(current.id);}
+function openSleepModal(){document.getElementById('sleepModal').classList.add('show');}
+function closeSleepModal(){document.getElementById('sleepModal').classList.remove('show');}
+function setSleep(m){
+  if(sleepTO)clearTimeout(sleepTO);sleepEnd=Date.now()+m*60000;
+  sleepTO=setTimeout(()=>{stopAll();showToast('😴 Yayın kapatıldı','info');sleepEnd=null;document.getElementById('sleepPill').classList.remove('show');},m*60000);
+  document.getElementById('sleepPill').classList.add('show');
+  showToast(`😴 ${m} dakika sonra kapanacak`,'info');closeSleepModal();
+}
+function cancelSleep(){if(sleepTO)clearTimeout(sleepTO);sleepTO=null;sleepEnd=null;document.getElementById('sleepPill').classList.remove('show');closeSleepModal();showToast('Zamanlayıcı iptal edildi','info');}
+setInterval(()=>{if(!sleepEnd)return;const r=Math.max(0,sleepEnd-Date.now());const mi=Math.floor(r/60000),s=Math.floor((r%60000)/1000);document.getElementById('sleepPill').textContent=`😴 ${mi}:${String(s).padStart(2,'0')}`;},1000);
+function showToast(msg,type='info'){const map={success:'#1db954',error:'#e22134',warn:'#f59e0b',info:'#3a3a3a'};const t=document.createElement('div');t.className='toast';t.style.background=map[type]||map.info;t.style.color='#fff';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
+function setTab(t,el){tab=t;if(t!=='favorites')country='TR';document.querySelectorAll('.nav-link').forEach(n=>n.classList.remove('active'));if(el)el.classList.add('active');renderGrid();renderSidebar();}
+function setCountry(c){country=c;renderGrid();renderSidebar();}
+function setGenre(g,el){genre=g;document.querySelectorAll('.gpill').forEach(b=>b.classList.remove('active'));if(el)el.classList.add('active');renderGrid();}
+function doSearch(){q=document.getElementById('searchInput').value;renderGrid();}
+function clearSearch(){document.getElementById('searchInput').value='';q='';renderGrid();}
+window.addEventListener('load',()=>{renderGrid();renderSidebar();setTimeout(()=>document.getElementById('splash').classList.add('hide'),2400);setTimeout(bgCheck,5000);});
+</script>
+</body>
+</html>
