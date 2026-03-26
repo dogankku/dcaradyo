@@ -65,14 +65,15 @@ button,input{font:inherit} button{cursor:pointer} img{display:block}
   .player-right{justify-content:center}
 }
 @media (max-width: 640px){
-  .topbar,.segment-wrap,.country-strip,.toolbar,.content{padding-left:14px;padding-right:14px}
+  .topbar,.segment-wrap,.content{padding-left:14px;padding-right:14px}
   .headline{flex-direction:column;align-items:flex-start}
   .headline h1{font-size:24px}
   .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
   .status{display:none}
   .meta{width:100%;justify-content:space-between}
   .segment{display:grid;grid-template-columns:repeat(3,1fr)}
-  .country-strip,.toolbar{padding-bottom:12px}
+  .country-strip,.toolbar{display:none}
+  .content{padding-top:8px;padding-bottom:150px}
   .player{bottom:0;padding:8px 10px;grid-template-columns:1fr auto;align-items:center;gap:10px;min-height:92px}
   .now{gap:10px}
   .now-cover{width:44px;height:44px}
