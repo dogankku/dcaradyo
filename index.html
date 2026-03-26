@@ -20,6 +20,18 @@ button,input{font:inherit} button{cursor:pointer} img{display:block}
 .app{height:100%;display:grid;grid-template-rows:1fr var(--player);gap:8px;padding:8px}
 .shell{min-height:0;display:grid;grid-template-columns:var(--sidebar) 1fr;gap:8px}
 .sidebar,.main,.player{background:var(--panel);border-radius:var(--radius)}
+.country-modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:flex-end;justify-content:center;z-index:75;padding:14px}
+.country-modal.open{display:flex}
+.country-sheet{width:min(100%,520px);max-height:78vh;background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;flex-direction:column}
+.country-sheet-head{padding:14px 14px 10px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.country-sheet-head h3{font-size:18px}
+.country-sheet-close{border:none;background:var(--panel2);color:#fff;border-radius:999px;padding:8px 12px;font-weight:700}
+.country-search{padding:0 14px 12px}
+.country-search input{width:100%;height:42px;border:none;border-radius:12px;background:var(--panel2);color:#fff;padding:0 14px;outline:none}
+.country-sheet-list{padding:0 10px 12px;overflow:auto;display:grid;gap:6px}
+.country-sheet-btn{border:none;background:transparent;color:var(--text);display:flex;align-items:center;gap:12px;text-align:left;padding:12px;border-radius:12px}
+.country-sheet-btn:hover,.country-sheet-btn.active{background:var(--panel2)}
+.country-sheet-btn .code{margin-left:auto;color:var(--soft);font-size:12px}
 .sidebar{padding:14px;display:flex;flex-direction:column;gap:14px;min-height:0}
 .brand{display:flex;align-items:center;gap:10px;padding:6px 8px}.brand-emoji{font-size:28px}.brand-name{font-size:20px;font-weight:800;letter-spacing:-.02em}
 .nav{display:flex;flex-direction:column;gap:4px}.nav-btn{display:flex;align-items:center;gap:12px;width:100%;background:none;border:none;color:var(--muted);padding:10px 12px;border-radius:10px;font-weight:700;text-align:left}
@@ -173,6 +185,19 @@ button,input{font:inherit} button{cursor:pointer} img{display:block}
   </div>
 </div>
 
+<div class="country-modal" id="countryModal">
+  <div class="country-sheet">
+    <div class="country-sheet-head">
+      <h3>Ülke seç</h3>
+      <button class="country-sheet-close" id="closeCountryModal">Kapat</button>
+    </div>
+    <div class="country-search">
+      <input id="countrySearchInput" type="text" placeholder="Ülke ara...">
+    </div>
+    <div class="country-sheet-list" id="countrySheetList"></div>
+  </div>
+</div>
+
 <div id="videoOverlay">
   <div class="video-box">
     <div class="video-head">
@@ -219,10 +244,24 @@ const COUNTRIES = [
   {code:'CA',name:'Kanada',flag:'🇨🇦'},{code:'AU',name:'Avustralya',flag:'🇦🇺'},{code:'IN',name:'Hindistan',flag:'🇮🇳'},
   {code:'EG',name:'Mısır',flag:'🇪🇬'},{code:'IR',name:'İran',flag:'🇮🇷'}
 ];
-const state = {tab:'radio',country:'TR',genre:'Tümü',query:'',channels:[],current:null,sleepTimer:null,sleepEnd:null,cacheMeta:'',loading:false};
+
+const state = {
+  tab:'radio',
+  country:'TR',
+  genre:'Tümü',
+  query:'',
+  channels:[],
+  current:null,
+  sleepTimer:null,
+  sleepEnd:null,
+  cacheMeta:'',
+  loading:false
+};
+
 const audio = document.getElementById('audioPlayer');
 const tvVideo = document.getElementById('tvVideo');
-const $ = s => document.querySelector(s); const $$ = s => Array.from(document.querySelectorAll(s));
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
 const CACHE_TTL = 1000*60*30;
 
 function saveJSON(k,v){localStorage.setItem(k,JSON.stringify(v))}
@@ -232,8 +271,16 @@ function getFavorites(){return loadJSON('orbis_favorites',[])}
 function setFavorites(v){saveJSON('orbis_favorites',v)}
 function isFav(ch){return getFavorites().some(x=>x.id===favoriteKey(ch))}
 function countryMeta(code){return COUNTRIES.find(c=>c.code===code)||COUNTRIES[0]}
-function toast(msg,type=''){const el=document.createElement('div');el.className=`toast ${type}`.trim();el.textContent=msg;$('#toastWrap').appendChild(el);setTimeout(()=>el.remove(),3200)}
-function escapeHtml(text=''){return String(text).replace(/[&<>\\"]/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]))}
+function toast(msg,type=''){
+  const el=document.createElement('div');
+  el.className=`toast ${type}`.trim();
+  el.textContent=msg;
+  $('#toastWrap').appendChild(el);
+  setTimeout(()=>el.remove(),3200);
+}
+function escapeHtml(text=''){
+  return String(text).replace(/[&<>\\"]/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]));
+}
 function deriveGenre(text=''){
   const t=String(text).toLowerCase();
   if(/news|haber|information|actualite|aktuell/.test(t))return'Haber';
@@ -260,6 +307,22 @@ function renderCountries(){
   $('#countryList').innerHTML = COUNTRIES.map(c=>`<button class="country-btn ${state.country===c.code?'active':''}" data-country="${c.code}"><div class="country-flag">${c.flag}</div><div>${c.name}</div><div class="country-meta">${c.code}</div></button>`).join('');
   $('#countryStrip').innerHTML = COUNTRIES.map(c=>`<button class="country-chip ${state.country===c.code?'active':''}" data-country="${c.code}">${c.flag} ${c.name}</button>`).join('');
   $('#countryBadge').textContent = `${countryMeta(state.country).flag} ${countryMeta(state.country).name}`;
+  renderCountrySheet();
+}
+
+function renderCountrySheet(){
+  const q=($('#countrySearchInput')?.value||'').trim().toLowerCase();
+  const list=COUNTRIES.filter(c=>`${c.name} ${c.code}`.toLowerCase().includes(q));
+  $('#countrySheetList').innerHTML = list.map(c=>`<button class="country-sheet-btn ${state.country===c.code?'active':''}" data-country-sheet="${c.code}"><span style="font-size:20px">${c.flag}</span><span>${c.name}</span><span class="code">${c.code}</span></button>`).join('');
+}
+
+function openCountryModal(){
+  $('#countryModal').classList.add('open');
+  renderCountrySheet();
+}
+
+function closeCountryModal(){
+  $('#countryModal').classList.remove('open');
 }
 
 function renderGenres(){
@@ -282,11 +345,17 @@ function renderGrid(){
   $('#pageTitle').textContent = state.tab==='favorites' ? 'Favorilerim' : `${c.flag} ${c.name} ${state.tab==='tv'?'TV':'Radyo'} kanalları`;
   $('#pageSubtitle').textContent = state.tab==='tv' ? 'Kartlara dokununca video açılır.' : state.tab==='favorites' ? 'Yerel hafızaya kaydettiğin kanallar.' : 'TV için üstteki TV sekmesine dokun.';
   $('#countLabel').textContent = `${list.length} kanal`;
-  if(state.loading){$('#gridWrap').innerHTML='<div class="loader">Kanallar yükleniyor...</div>';return}
+
+  if(state.loading){
+    $('#gridWrap').innerHTML='<div class="loader">Kanallar yükleniyor...</div>';
+    return;
+  }
+
   if(!list.length){
     $('#gridWrap').innerHTML='<div class="empty"><div style="font-size:56px;margin-bottom:10px">🔎</div><b>Kanal bulunamadı</b><div style="margin-top:8px">Başka ülke veya sekme seçebilirsin.</div></div>';
     return;
   }
+
   $('#gridWrap').innerHTML = `<div class="grid">${list.map(ch=>{
     const playing=state.current&&favoriteKey(state.current)===favoriteKey(ch);
     const fav=isFav(ch);
@@ -316,20 +385,33 @@ function renderPlayer(){
 
 function toggleFav(ch){
   const list=getFavorites(),id=favoriteKey(ch),i=list.findIndex(x=>x.id===id);
-  if(i>=0){list.splice(i,1);toast('Favorilerden çıkarıldı')}
-  else{list.unshift({id,...ch});toast('Favorilere eklendi','success')}
-  setFavorites(list);renderGrid();renderPlayer();
+  if(i>=0){
+    list.splice(i,1);
+    toast('Favorilerden çıkarıldı');
+  }else{
+    list.unshift({id,...ch});
+    toast('Favorilere eklendi','success');
+  }
+  setFavorites(list);
+  renderGrid();
+  renderPlayer();
 }
 
 async function fetchRadio(country){
   const key=`orbis_radio_${country}`;
   const cached=loadJSON(key,null);
-  if(cached&&Date.now()-cached.time<CACHE_TTL){state.cacheMeta='Radyo önbellekten';return cached.items}
+  if(cached&&Date.now()-cached.time<CACHE_TTL){
+    state.cacheMeta='Radyo önbellekten';
+    return cached.items;
+  }
+
   const url=country==='ALL'
     ?'https://de1.api.radio-browser.info/json/stations/topvote/250?hidebroken=true'
     :`https://de1.api.radio-browser.info/json/stations/bycountrycodeexact/${country}?hidebroken=true&order=votes&reverse=true&limit=250`;
+
   const res=await fetch(url);
   const data=await res.json();
+
   const items=data.filter(x=>x.url_resolved).slice(0,220).map(x=>({
     id:favoriteKey({type:'radio',country:x.countrycode||country,name:x.name||'İsimsiz'}),
     type:'radio',
@@ -341,6 +423,7 @@ async function fetchRadio(country){
     genre:deriveGenre(x.tags),
     tags:x.tags||''
   }));
+
   saveJSON(key,{time:Date.now(),items});
   state.cacheMeta='Radyo canlı API';
   return items;
@@ -350,9 +433,11 @@ function parseM3U(text,country){
   const lines=text.split('\n');
   const out=[];
   let meta=null;
+
   for(const raw of lines){
     const line=raw.trim();
     if(!line)continue;
+
     if(line.startsWith('#EXTINF')){
       const name=(line.match(/,(.*)$/)||[,'İsimsiz TV'])[1].trim();
       const logo=(line.match(/tvg-logo="([^"]*)"/)||[,''])[1];
@@ -373,6 +458,7 @@ function parseM3U(text,country){
       meta=null;
     }
   }
+
   return out.slice(0,220);
 }
 
@@ -383,13 +469,19 @@ async function fetchTV(country){
     state.cacheMeta='TV çoklu ülke';
     return batches.flat().slice(0,260);
   }
+
   const key=`orbis_tv_${country}`;
   const cached=loadJSON(key,null);
-  if(cached&&Date.now()-cached.time<CACHE_TTL){state.cacheMeta='TV önbellekten';return cached.items}
+  if(cached&&Date.now()-cached.time<CACHE_TTL){
+    state.cacheMeta='TV önbellekten';
+    return cached.items;
+  }
+
   const urls=[
     `https://iptv-org.github.io/iptv/countries/${country.toLowerCase()}.m3u`,
     `https://raw.githubusercontent.com/iptv-org/iptv/master/streams/${country.toLowerCase()}.m3u`
   ];
+
   let text='';
   for(const url of urls){
     try{
@@ -400,6 +492,7 @@ async function fetchTV(country){
       }
     }catch{}
   }
+
   const items=text?parseM3U(text,country):[];
   saveJSON(key,{time:Date.now(),items});
   state.cacheMeta=text?'TV canlı liste':'TV listesi bulunamadı';
@@ -408,14 +501,22 @@ async function fetchTV(country){
 
 async function loadChannels(force=false){
   state.loading=true;
+
   if(force){
     localStorage.removeItem(`orbis_radio_${state.country}`);
     localStorage.removeItem(`orbis_tv_${state.country}`);
   }
+
   renderGenres();
   renderGrid();
+
   try{
-    state.channels=state.tab==='radio'?await fetchRadio(state.country):state.tab==='tv'?await fetchTV(state.country):getFavorites();
+    state.channels=state.tab==='radio'
+      ?await fetchRadio(state.country)
+      :state.tab==='tv'
+      ?await fetchTV(state.country)
+      :getFavorites();
+
     state.genre='Tümü';
     $('#sourceLabel').textContent=`Kaynak: ${state.tab==='tv'?'iptv-org':state.tab==='radio'?'Radio Browser':'Yerel favoriler'}`;
     $('#cacheLabel').textContent=`Önbellek: ${state.cacheMeta}`;
@@ -433,35 +534,52 @@ async function loadChannels(force=false){
   }
 }
 
-function currentList(){return state.tab==='favorites'?getFavorites():[...state.channels,...getFavorites()]}
-function findChannelByKey(key){return currentList().find(x=>favoriteKey(x)===key)}
+function currentList(){
+  return state.tab==='favorites'?getFavorites():[...state.channels,...getFavorites()];
+}
+
+function findChannelByKey(key){
+  return currentList().find(x=>favoriteKey(x)===key);
+}
 
 async function playChannel(ch){
   state.current=ch;
   renderPlayer();
+
   if(ch.type==='tv'){
     audio.pause();
     audio.src='';
     $('#videoTitle').textContent=ch.name;
     $('#videoOverlay').classList.add('open');
     tvVideo.src=ch.url;
-    try{await tvVideo.play();toast('TV yayını başlatıldı','success')}
-    catch{toast('TV oynatma başlatılamadı','error')}
+    try{
+      await tvVideo.play();
+      toast('TV yayını başlatıldı','success');
+    }catch{
+      toast('TV oynatma başlatılamadı','error');
+    }
   }else{
     tvVideo.pause();
     tvVideo.src='';
     $('#videoOverlay').classList.remove('open');
     audio.src=ch.url;
-    try{await audio.play();toast('Radyo oynatılıyor','success')}
-    catch{toast('Tarayıcı oynatmayı engelledi','warn')}
+    try{
+      await audio.play();
+      toast('Radyo oynatılıyor','success');
+    }catch{
+      toast('Tarayıcı oynatmayı engelledi','warn');
+    }
   }
+
   renderGrid();
   renderPlayer();
 }
 
 function stopPlayback(){
-  audio.pause();audio.src='';
-  tvVideo.pause();tvVideo.src='';
+  audio.pause();
+  audio.src='';
+  tvVideo.pause();
+  tvVideo.src='';
   $('#videoOverlay').classList.remove('open');
   state.current=null;
   renderGrid();
@@ -470,6 +588,7 @@ function stopPlayback(){
 
 function toggleAudio(){
   if(!state.current)return;
+
   if(state.current.type==='tv'){
     if(tvVideo.paused)tvVideo.play().catch(()=>{});
     else tvVideo.pause();
@@ -477,14 +596,15 @@ function toggleAudio(){
     if(audio.paused)audio.play().catch(()=>{});
     else audio.pause();
   }
+
   renderPlayer();
 }
 
 audio.addEventListener('play',renderPlayer);
 audio.addEventListener('pause',renderPlayer);
 
-function openSleep(){$('#sleepModal').classList.add('open')}
-function closeSleep(){$('#sleepModal').classList.remove('open')}
+function openSleep(){ $('#sleepModal').classList.add('open'); }
+function closeSleep(){ $('#sleepModal').classList.remove('open'); }
 
 function startSleep(min){
   if(state.sleepTimer)clearTimeout(state.sleepTimer);
@@ -516,7 +636,10 @@ setInterval(()=>{
 },1000);
 
 async function togglePiP(){
-  if(!state.current||state.current.type!=='tv'){toast('PiP yalnızca TV için kullanılabilir');return}
+  if(!state.current||state.current.type!=='tv'){
+    toast('PiP yalnızca TV için kullanılabilir');
+    return;
+  }
   try{
     if(document.pictureInPictureElement)await document.exitPictureInPicture();
     else await tvVideo.requestPictureInPicture();
@@ -554,6 +677,20 @@ function bindEvents(){
     await loadChannels();
   });
 
+  $('#countryBadge').addEventListener('click',openCountryModal);
+  $('#closeCountryModal').addEventListener('click',closeCountryModal);
+  $('#countryModal').addEventListener('click',e=>{
+    if(e.target.id==='countryModal')closeCountryModal();
+  });
+  $('#countrySearchInput').addEventListener('input',renderCountrySheet);
+  $('#countrySheetList').addEventListener('click',async e=>{
+    const btn=e.target.closest('[data-country-sheet]');
+    if(!btn)return;
+    state.country=btn.dataset.countrySheet;
+    closeCountryModal();
+    await loadChannels();
+  });
+
   $('#genreBar').addEventListener('click',e=>{
     const btn=e.target.closest('[data-genre]');
     if(!btn)return;
@@ -569,6 +706,7 @@ function bindEvents(){
       if(ch)toggleFav(ch);
       return;
     }
+
     const play=e.target.closest('[data-play]');
     if(play){
       const ch=findChannelByKey(decodeURIComponent(play.dataset.play));
@@ -576,7 +714,10 @@ function bindEvents(){
     }
   });
 
-  $('#playerFav').addEventListener('click',()=>{if(state.current)toggleFav(state.current)});
+  $('#playerFav').addEventListener('click',()=>{
+    if(state.current)toggleFav(state.current);
+  });
+
   $('#toggleBtn').addEventListener('click',toggleAudio);
   $('#stopBtn').addEventListener('click',stopPlayback);
   $('#reloadBtn').addEventListener('click',()=>loadChannels(true));
